@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitcoin Price Prediction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result-section {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        .result-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .signal-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .signal-buy {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .signal-sell {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .signal-hold {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .result-item {
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .result-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .result-value {
+            font-size: 16px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .similar-days {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .similar-days-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .day-item {
+            padding: 8px;
+            margin-bottom: 6px;
+            background: white;
+            border-radius: 4px;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .day-date {
+            color: #666;
+        }
+
+        .day-result {
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            background: #f0f0f0;
+        }
+
+        .news-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .news-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .news-item {
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 6px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .news-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .error {
+            display: none;
+            padding: 15px;
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bitcoin Price Prediction</h1>
+        <p class="subtitle">KNN-based model with sentiment analysis</p>
+
+        <div id="error" class="error"></div>
+
+        <form id="predictionForm">
+            <div class="form-group">
+                <label>Get Prediction</label>
+                <p class="info-text">Analyzing live Bitcoin data and market sentiment...</p>
+            </div>
+
+            <button type="submit" id="predictBtn">Get Prediction</button>
+        </form>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #666;">Fetching data and computing similarity...</p>
+        </div>
+
+        <div id="resultSection" class="result-section">
+            <div class="result-title">Prediction Result</div>
+
+            <div id="signalBadge" class="signal-badge"></div>
+
+            <div class="result-grid">
+                <div class="result-item">
+                    <div class="result-label">Signal</div>
+                    <div class="result-value" id="signal"></div>
+                </div>
+                <div class="result-item">
+                    <div class="result-label">Confidence</div>
+                    <div class="result-value" id="confidence"></div>
+                </div>
+                <div class="result-item">
+                    <div class="result-label">Sentiment</div>
+                    <div class="result-value" id="sentiment"></div>
+                </div>
+                <div class="result-item">
+                    <div class="result-label">Score</div>
+                    <div class="result-value" id="sentimentScore"></div>
+                </div>
+            </div>
+
+            <div style="padding: 12px; background: white; border-radius: 6px; border: 1px solid #e0e0e0; margin-bottom: 15px;">
+                <div class="result-label" style="margin-bottom: 6px;">Final Recommendation</div>
+                <div id="final" style="font-size: 16px; color: #667eea; font-weight: 600;"></div>
+            </div>
+
+            <div class="similar-days">
+                <div class="similar-days-title">Top Similar Historical Days</div>
+                <div id="similarDaysContainer"></div>
+            </div>
+
+            <div class="news-section">
+                <div class="news-title">Recent News Analyzed</div>
+                <div id="newsContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('predictionForm');
+        const predictBtn = document.getElementById('predictBtn');
+        const loading = document.getElementById('loading');
+        const resultSection = document.getElementById('resultSection');
+        const errorDiv = document.getElementById('error');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await getPrediction();
+        });
+
+        async function getPrediction() {
+            // Reset UI
+            errorDiv.classList.remove('show');
+            resultSection.classList.remove('show');
+            loading.style.display = 'block';
+            predictBtn.disabled = true;
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    showError(result.error || 'Failed to get prediction');
+                    return;
+                }
+
+                displayResult(result.data);
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            } finally {
+                loading.style.display = 'none';
+                predictBtn.disabled = false;
+            }
+        }
+
+        function displayResult(data) {
+            // Signal and confidence
+            document.getElementById('signal').textContent = data.signal;
+            document.getElementById('confidence').textContent = data.confidence + '%';
+            document.getElementById('sentiment').textContent = data.sentiment;
+            document.getElementById('sentimentScore').textContent = data.sent_score;
+            document.getElementById('final').textContent = data.final;
+
+            // Signal badge color
+            const badge = document.getElementById('signalBadge');
+            badge.textContent = data.signal;
+            badge.className = 'signal-badge';
+            if (data.signal === 'BUY' || data.final.includes('BUY')) {
+                badge.classList.add('signal-buy');
+            } else if (data.signal === 'SELL' || data.final.includes('SELL')) {
+                badge.classList.add('signal-sell');
+            } else {
+                badge.classList.add('signal-hold');
+            }
+
+            // Similar days
+            const similarContainer = document.getElementById('similarDaysContainer');
+            similarContainer.innerHTML = data.similar_days
+                .map(day => `
+                    <div class="day-item">
+                        <span class="day-date">${day.date}</span>
+                        <span>RSI: ${day.rsi}</span>
+                        <span class="day-result">${day.result}</span>
+                    </div>
+                `)
+                .join('');
+
+            // News
+            const newsContainer = document.getElementById('newsContainer');
+            if (data.news && data.news.length > 0) {
+                newsContainer.innerHTML = data.news
+                    .slice(0, 3)
+                    .map(item => `<div class="news-item">${item.title || item.text}</div>`)
+                    .join('');
+            } else {
+                newsContainer.innerHTML = '<div class="news-item">No recent news found</div>';
+            }
+
+            resultSection.classList.add('show');
+        }
+
+        function showError(message) {
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+        }
+    </script>
+</body>
+</html>
