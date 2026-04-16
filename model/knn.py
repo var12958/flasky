@@ -95,23 +95,22 @@ def load_model_artifacts():
 # ── Live data fetcher ──────────────────────────────────────────────────────
 
 def get_live_btc_data():
-    """Fetches today's OHLCV candle from Binance. Raises RuntimeError on failure."""
-    url    = "https://api.binance.com/api/v3/klines"
-    params = {"symbol": "BTCUSDT", "interval": "1d", "limit": 1}
+    url = "https://api.coingecko.com/api/v3/coins/bitcoin/ohlc?vs_currency=usd&days=1"
     try:
-        resp = requests.get(url, params=params, timeout=5)
+        resp = requests.get(url, timeout=10)
         resp.raise_for_status()
-        d = resp.json()[0]
+        data = resp.json()
+        last = data[-1]  # [timestamp, open, high, low, close]
         return {
-            "Date":   pd.to_datetime(d[0], unit='ms'),
-            "Open":   float(d[1]),
-            "High":   float(d[2]),
-            "Low":    float(d[3]),
-            "Close":  float(d[4]),
-            "Volume": float(d[5]),
+            "Date":   pd.to_datetime(last[0], unit='ms'),
+            "Open":   float(last[1]),
+            "High":   float(last[2]),
+            "Low":    float(last[3]),
+            "Close":  float(last[4]),
+            "Volume": 0.0,  # CoinGecko OHLC doesn't include volume
         }
     except Exception as exc:
-        raise RuntimeError(f"Binance API unavailable: {exc}")
+        raise RuntimeError(f"CoinGecko API unavailable: {exc}")
 
 
 def _prepare_live_features(df, live):
