@@ -98,16 +98,29 @@ def get_live_btc_data():
     import requests
     import pandas as pd
 
-    url = "https://api.coingecko.com/api/v3/coins/bitcoin/ohlc"
-    params = {
+    # 1. OHLC data
+    ohlc_url = "https://api.coingecko.com/api/v3/coins/bitcoin/ohlc"
+    ohlc_params = {
         "vs_currency": "usd",
         "days": 1
     }
 
-    resp = requests.get(url, params=params, timeout=5)
-    data = resp.json()
+    ohlc_resp = requests.get(ohlc_url, params=ohlc_params, timeout=5)
+    ohlc_data = ohlc_resp.json()
+    d = ohlc_data[-1]
 
-    d = data[-1]
+    # 2. Volume data
+    vol_url = "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart"
+    vol_params = {
+        "vs_currency": "usd",
+        "days": 1
+    }
+
+    vol_resp = requests.get(vol_url, params=vol_params, timeout=5)
+    vol_data = vol_resp.json()
+
+    # Total volume → take latest
+    volume = vol_data["total_volumes"][-1][1]
 
     return {
         "Date": pd.to_datetime(d[0], unit='ms'),
@@ -115,7 +128,7 @@ def get_live_btc_data():
         "High": float(d[2]),
         "Low": float(d[3]),
         "Close": float(d[4]),
-        "Volume": 0.0
+        "Volume": float(volume)   # ✅ REAL VOLUME
     }
 
 
